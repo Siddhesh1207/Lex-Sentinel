@@ -1,108 +1,265 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { X, ExternalLink, AlertTriangle } from 'lucide-react';
-import RiskBadge from './RiskBadge';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { X, AlertTriangle, CheckCircle, ExternalLink, Info, PenTool, Highlighter, Loader2 } from 'lucide-react'
+import RiskBadge from './RiskBadge.jsx'
+import { draftClause, redlineClause } from '../services/api.js'
 
-const ClauseDrawer = ({ isOpen, clauseData, onClose }) => {
-  const navigate = useNavigate();
+const CRITICAL = [
+  'Cap on Liability', 'Audit Rights', 'Termination for Convenience',
+  'Change of Control', 'IP Ownership Assignment', 'Anti-Assignment',
+  'Insurance', 'Uncapped Liability',
+]
 
-  if (!isOpen || !clauseData) return null;
+const CONFIDENCE_DOT = {
+  HIGH: 'bg-emerald-500',
+  MEDIUM: 'bg-amber-500',
+  LOW: 'bg-rose-500',
+}
 
-  const isPresent = clauseData.status === "PRESENT";
-  
-  const handleAskAI = () => {
-    // Basic navigation, advanced app would manage context state
-    navigate(`/chat?contract=${encodeURIComponent(clauseData.contract_name)}&q=Tell me about the ${encodeURIComponent(clauseData.clause_type)} clause`);
-  };
+export default function ClauseDrawer({ isOpen, clauseData, onClose, loading }) {
+  const navigate = useNavigate()
+  const isPresent = clauseData?.status === 'PRESENT'
+  const riskWeight = clauseData?.risk_weight ?? (CRITICAL.includes(clauseData?.clause_type) ? 3 : 1)
+  const mockScore = !isPresent ? (riskWeight === 3 ? 18 : 5) : 2
+
+  const [isDrafting, setIsDrafting] = useState(false)
+  const [draftResult, setDraftResult] = useState(null)
+  const [isRedlining, setIsRedlining] = useState(false)
+  const [redlineResult, setRedlineResult] = useState(null)
+
+  useEffect(() => {
+    setDraftResult(null)
+    setRedlineResult(null)
+  }, [clauseData])
+
+  function handleAskAI() {
+    navigate('/chat', {
+      state: {
+        prefillContract: clauseData?.contract_name,
+        prefillQuery: `Does this contract have a ${clauseData?.clause_type} clause? Explain in detail.`,
+      },
+    })
+    onClose()
+  }
+
+  async function handleDraft() {
+    if (!clauseData) return
+    setIsDrafting(true)
+    try {
+      const res = await draftClause(clauseData.clause_type)
+      setDraftResult(res.draft)
+    } catch (e) {
+      setDraftResult('Failed to generate draft. ' + e.message)
+    } finally {
+      setIsDrafting(false)
+    }
+  }
+
+  async function handleRedline() {
+    if (!clauseData?.excerpt) return
+    setIsRedlining(true)
+    try {
+      const res = await redlineClause(clauseData.excerpt)
+      setRedlineResult(res.redlined_text)
+    } catch (e) {
+      setRedlineResult(clauseData.excerpt) // Fallback
+    } finally {
+      setIsRedlining(false)
+    }
+  }
 
   return (
     <>
-      <div 
-        className="fixed inset-0 bg-gray-900/50 dark:bg-black/60 z-40 backdrop-blur-sm transition-opacity" 
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-[#0B0E14]/70 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={onClose}
       />
-      
-      <div className={`fixed right-0 top-0 h-full w-[450px] bg-white dark:bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white line-clamp-1 pr-4" title={clauseData.contract_name}>
-              {clauseData.contract_name}
-            </h2>
-            <div className="flex items-center space-x-3 mt-1.5">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {clauseData.clause_type}
-              </span>
-              <RiskBadge score={clauseData.risk_weight} />
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-            <X size={20} />
+
+      {/* Drawer */}
+      <div
+        className={`fixed top-0 right-0 h-screen w-[480px] z-50 bg-[#151822]
+          border-l border-[#1F2433] shadow-2xl
+          transition-transform duration-300 ease-in-out flex flex-col
+          ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#1F2433] bg-[#0B0E14]">
+          <p className="text-[13px] font-bold tracking-widest text-slate-400 uppercase">Clause Detail</p>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-[#1E2336] text-slate-500 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between mb-6">
-            <span className={`px-4 py-1.5 rounded-md text-sm font-bold tracking-wider ${
-              isPresent 
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' 
-                : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-            }`}>
-              {clauseData.status}
-            </span>
-            
-            <div className="flex items-center space-x-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              <span>Confidence:</span>
-              <span className={`w-2 h-2 rounded-full ${
-                clauseData.confidence === 'HIGH' ? 'bg-green-500' :
-                clauseData.confidence === 'MEDIUM' ? 'bg-amber-500' : 'bg-red-500'
-              }`}></span>
-              <span>{clauseData.confidence}</span>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          {loading && (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-indigo-500">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <p className="text-sm font-semibold">Loading clause detail…</p>
             </div>
-          </div>
+          )}
 
-          {isPresent ? (
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 uppercase tracking-wider mb-2">Excerpt from text</h3>
-              <div className="bg-blue-50/50 dark:bg-gray-900/50 border border-blue-100 dark:border-gray-700 p-5 rounded-xl rounded-tl-none relative">
-                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l"></div>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif italic text-sm">
-                  "{clauseData.excerpt}"
+          {!loading && !clauseData && (
+            <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-600">
+              <Info className="w-10 h-10" />
+              <p className="text-sm font-semibold">Click a cell in the heatmap to see clause details.</p>
+            </div>
+          )}
+
+          {!loading && clauseData && (
+            <div className="space-y-6">
+              {/* Contract name */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                  Contract
+                </p>
+                <p className="text-[15px] font-bold text-white leading-snug break-words">
+                  {clauseData.contract_name}
                 </p>
               </div>
-              <p className="text-xs text-right text-gray-500 font-medium">
-                Page Hint: {clauseData.page_hint !== "N/A" ? clauseData.page_hint : "Unknown section"}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-5 mt-4">
-              <div className="flex items-start">
-                <AlertTriangle className="text-red-500 dark:text-red-400 mt-0.5 mr-3 flex-shrink-0" size={18} />
-                <div>
-                  <h4 className="text-red-800 dark:text-red-300 font-semibold mb-1">Clause Missing</h4>
-                  <p className="text-red-700/80 dark:text-red-400/80 text-sm leading-relaxed">
-                    This clause is NOT found in the contract. This significantly increases legal and financial exposure.
+
+              {/* Clause type + risk badge */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                  Clause Type
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <p className="text-[15px] font-bold text-white">
+                    {clauseData.clause_type}
                   </p>
-                  <div className="mt-3 font-mono text-xs text-red-600 dark:text-red-400 bg-white/50 dark:bg-black/20 inline-block px-2 py-1 rounded">
-                    Risk Weight Penalty: +{clauseData.risk_weight}
-                  </div>
+                  <RiskBadge score={mockScore} />
                 </div>
               </div>
+
+              {/* Status */}
+              <div className={`rounded-xl p-4 flex items-center gap-3 border ${isPresent
+                  ? 'bg-emerald-500/10 border-emerald-500/20'
+                  : 'bg-rose-500/10 border-rose-500/20'
+                }`}>
+                {isPresent
+                  ? <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  : <AlertTriangle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                }
+                <div>
+                  <p className={`text-[13px] font-bold tracking-wide ${isPresent ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {isPresent ? 'PRESENT' : 'ABSENT'}
+                  </p>
+                  {!isPresent && (
+                     <p className="text-[11px] text-rose-500/80 font-semibold mt-1">
+                      Risk Weight: {riskWeight === 3 ? 'Critical Severity' : 'Standard Validation'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Excerpt with Redlining Feature */}
+              {isPresent && clauseData.excerpt && clauseData.excerpt !== 'N/A' && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                       Extracted Text
+                     </p>
+                     <button 
+                       onClick={handleRedline}
+                       disabled={isRedlining || redlineResult}
+                       className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 disabled:opacity-50 transition-colors"
+                     >
+                       {isRedlining ? <Loader2 className="w-3 h-3 animate-spin"/> : <Highlighter className="w-3 h-3" />}
+                       {isRedlining ? 'Scanning...' : 'Redline Risks'}
+                     </button>
+                  </div>
+                  <blockquote className="border-l-2 border-indigo-500 pl-4 py-1.5 bg-[#0B0E14] rounded-r-xl pr-3">
+                    {isRedlining ? (
+                      <div className="flex items-center gap-3 text-indigo-400 py-4">
+                        <Loader2 className="w-4 h-4 animate-spin"/>
+                        <span className="text-xs font-semibold">Running semantic threat analysis...</span>
+                      </div>
+                    ) : redlineResult ? (
+                      <p 
+                        className="text-[13px] text-slate-300 leading-loose prose-marks:bg-rose-500/30 prose-marks:text-rose-200 prose-marks:px-1 prose-marks:rounded prose-marks:font-semibold prose-marks:pb-0.5"
+                        dangerouslySetInnerHTML={{ __html: redlineResult }} 
+                      />
+                    ) : (
+                      <p className="text-[13px] text-slate-300 leading-loose">
+                        "{clauseData.excerpt}"
+                      </p>
+                    )}
+                  </blockquote>
+                  {clauseData.page_hint && clauseData.page_hint !== 'N/A' && (
+                    <p className="text-[11px] text-slate-500 font-bold mt-2 flex items-center gap-1.5">
+                       📄 {clauseData.page_hint}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Absent details with Auto-Drafter */}
+              {!isPresent && (
+                <div className="space-y-4">
+                   {CRITICAL.includes(clauseData.clause_type) && (
+                     <div className="rounded-xl bg-orange-500/10 border border-orange-500/20 p-4">
+                       <p className="text-[13px] font-bold text-orange-400 mb-1 flex items-center gap-2">
+                         <AlertTriangle className="w-4 h-4"/> Critical Liability Exposure
+                       </p>
+                       <p className="text-xs text-orange-400/80 font-medium leading-relaxed">
+                         The absence of this clause exposes the organization to unbounded risk. Immediate remediation recommended.
+                       </p>
+                     </div>
+                   )}
+                   
+                   <div className="pt-2 border-t border-[#1F2433]">
+                      <div className="flex items-center justify-between mb-3">
+                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                           Remediation Tools
+                         </p>
+                      </div>
+                      
+                      {draftResult ? (
+                         <div className="rounded-xl bg-[#0B0E14] border border-[#1F2433] p-4">
+                           <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                             <CheckCircle className="w-3.5 h-3.5"/> Standard Draft Generated
+                           </p>
+                           <div className="prose prose-invert prose-sm text-slate-300 leading-relaxed max-w-none">
+                             <div dangerouslySetInnerHTML={{ __html: draftResult.replace(/\n/g, '<br/>') }} />
+                           </div>
+                         </div>
+                      ) : (
+                         <button
+                           onClick={handleDraft}
+                           disabled={isDrafting}
+                           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#1E2336] hover:bg-[#2A3143] text-white text-[13px] font-bold transition-all disabled:opacity-50"
+                         >
+                           {isDrafting ? <Loader2 className="w-4 h-4 animate-spin"/> : <PenTool className="w-4 h-4"/>}
+                           {isDrafting ? 'Drafting standard clause...' : 'Auto-Draft Favorable Clause'}
+                         </button>
+                      )}
+                   </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="p-5 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end">
-          <button 
-            onClick={handleAskAI}
-            className="flex items-center space-x-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 font-medium transition shadow-sm"
-          >
-            <span>Ask AI about this clause</span>
-            <ExternalLink size={16} />
-          </button>
-        </div>
+        {/* Footer CTA */}
+        {clauseData && !loading && (
+          <div className="p-5 border-t border-[#1F2433] bg-[#0B0E14]">
+            <button
+              onClick={handleAskAI}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl
+                bg-indigo-600 hover:bg-indigo-500 text-white text-[13px] font-bold
+                transition-transform active:scale-[0.98] shadow-lg"
+            >
+              Research Clause Context in Chat
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </>
-  );
-};
-
-export default ClauseDrawer;
+  )
+}

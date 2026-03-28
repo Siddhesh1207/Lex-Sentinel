@@ -1,56 +1,89 @@
-import axios from 'axios';
+const API_BASE = 'http://localhost:8000/api'
 
-const api = axios.create({
-  baseURL: 'http://localhost:8000',
-});
+export async function fetchMetrics() {
+  const res = await fetch(`${API_BASE}/dashboard/metrics`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
 
-// Response interceptor to handle errors gracefully
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("API Error:", error);
-    const message = error.response?.data?.detail || error.message || "An expected error occurred";
-    throw new Error(message);
+export async function fetchHeatmap() {
+  const res = await fetch(`${API_BASE}/dashboard/heatmap`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function fetchClauseDetail(contractName, clauseType) {
+  const res = await fetch(`${API_BASE}/contract/${encodeURIComponent(contractName)}/clause/${encodeURIComponent(clauseType)}`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function fetchContracts() {
+  const res = await fetch(`${API_BASE}/contracts`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function sendChatMessage(query, contractFilters, chatHistory) {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      contract_filters: contractFilters,
+      chat_history: chatHistory,
+    }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function fetchEvaluation() {
+  const res = await fetch(`${API_BASE}/evaluation`)
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function uploadContract(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: 'POST',
+    body: formData,
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(errText || 'Upload failed')
   }
-);
+  return res.json()
+}
 
-export const fetchHealth = async () => {
-  const res = await api.get('/api/health');
-  return res.data;
-};
+export async function draftClause(clauseType) {
+  const res = await fetch(`${API_BASE}/draft`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clause_type: clauseType }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
 
-export const fetchMetrics = async () => {
-  const res = await api.get('/api/dashboard/metrics');
-  return res.data;
-};
+export async function redlineClause(excerpt) {
+  const res = await fetch(`${API_BASE}/redline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ excerpt }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
 
-export const fetchHeatmap = async () => {
-  const res = await api.get('/api/dashboard/heatmap');
-  return res.data;
-};
-
-export const fetchClauseDetail = async (contractName, clauseType) => {
-  const cn = encodeURIComponent(contractName);
-  const ct = encodeURIComponent(clauseType);
-  const res = await api.get(`/api/contract/${cn}/clause/${ct}`);
-  return res.data;
-};
-
-export const fetchContracts = async () => {
-  const res = await api.get('/api/contracts');
-  return res.data;
-};
-
-export const sendChatMessage = async (query, contractFilters = [], chatHistory = []) => {
-  const res = await api.post('/api/chat', {
-    query,
-    contract_filters: contractFilters,
-    chat_history: chatHistory
-  });
-  return res.data;
-};
-
-export const fetchEvaluation = async () => {
-  const res = await api.get('/api/evaluation');
-  return res.data;
-};
+export async function semanticSearch(query) {
+  const res = await fetch(`${API_BASE}/search/semantic`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}

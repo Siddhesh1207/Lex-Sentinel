@@ -1,61 +1,62 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, MessageCircle, BarChart2, Moon, Sun } from 'lucide-react';
+import { NavLink } from 'react-router-dom'
+import { 
+  LayoutDashboard, 
+  BrainCircuit, 
+  BarChart2, 
+  ShieldAlert,
+  FileText,
+  Archive,
+  HelpCircle,
+  User
+} from 'lucide-react'
 
-const Sidebar = ({ darkMode, setDarkMode }) => {
+export default function Sidebar() {
+  const mainLinks = [
+    { to: '/', icon: LayoutDashboard, label: 'DASHBOARD' },
+    { to: '/chat', icon: BrainCircuit, label: 'INTELLIGENCE' },
+    { to: '/discovery', icon: FileText, label: 'DISCOVERY' },
+    { to: '/evaluation', icon: BarChart2, label: 'EVALUATIONS' },
+    { to: '/contracts', icon: Archive, label: 'ALL CONTRACTS' },
+  ]
+
+  const NavItem = ({ to, icon: Icon, label }) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `flex items-center gap-4 px-5 py-3.5 rounded-lg text-xs font-bold tracking-widest transition-all duration-200 relative ${
+          isActive
+            ? 'bg-[#1E2336] text-white border-l-4 border-indigo-500 rounded-l-none'
+            : 'text-slate-400 hover:bg-[#1E2336]/50 hover:text-slate-200'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+          <span>{label}</span>
+        </>
+      )}
+    </NavLink>
+  )
+
   return (
-    <div className="w-[220px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full transition-colors duration-200">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">Clinical-Legal Sentinel</h1>
-        <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-1">Powered by AI</p>
-      </div>
+    <aside className="fixed inset-y-0 left-0 w-[260px] bg-[#0A0D14] border-r border-[#1F2433] flex flex-col z-50">
       
-      <nav className="flex-1 p-4 space-y-2">
-        <NavLink to="/" end className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isActive ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 dark:bg-blue-900/40 dark:text-blue-300' 
-            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 border-l-4 border-transparent'
-          }`
-        }>
-          <LayoutDashboard size={18} />
-          <span>Risk Dashboard</span>
-        </NavLink>
-        
-        <NavLink to="/chat" className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isActive ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 dark:bg-blue-900/40 dark:text-blue-300' 
-            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 border-l-4 border-transparent'
-          }`
-        }>
-          <MessageCircle size={18} />
-          <span>Contract Chat</span>
-        </NavLink>
-        
-        <NavLink to="/evaluation" className={({ isActive }) => 
-          `flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isActive ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 dark:bg-blue-900/40 dark:text-blue-300' 
-            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 border-l-4 border-transparent'
-          }`
-        }>
-          <BarChart2 size={18} />
-          <span>Evaluation</span>
-        </NavLink>
-      </nav>
-      
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <button 
-          onClick={() => setDarkMode(!darkMode)}
-          className="flex items-center w-full space-x-3 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
-        <div className="mt-4 px-3 text-xs text-gray-400 dark:text-gray-500">
-          i2e Clinical Intelligence<br />v1.0.0
+      {/* Brand */}
+      <div className="p-7 mb-4">
+        <div className="flex items-center gap-3 mb-1">
+          <ShieldAlert className="w-6 h-6 text-white" />
+          <span className="font-extrabold text-[19px] tracking-tight text-white leading-tight">Lex-Sentinel</span>
+        </div>
+        <div className="text-[10px] text-slate-500 font-bold tracking-[0.2em] ml-[36px]">
+          ENTERPRISE INTELLIGENCE
         </div>
       </div>
-    </div>
-  );
-};
 
-export default Sidebar;
+      <nav className="flex-1 px-3 overflow-y-auto space-y-2 mt-2">
+        {mainLinks.map((link) => <NavItem key={link.to} {...link} />)}
+      </nav>
+
+    </aside>
+  )
+}

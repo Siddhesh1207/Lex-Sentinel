@@ -1,37 +1,41 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# =========================
+# ENV FILES (NEVER COMMIT)
+# =========================
+backend/.env
+frontend/.env
 
-node_modules
-dist
-dist-ssr
-*.local
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Virtual environments
+venv/
+env/
+sentinel/
+
+# =========================
+# NODE
+# =========================
+frontend/node_modules/
+
+# =========================
+# DATA / STORAGE
+# =========================
+backend/qdrant_storage/
+backend/data/results/
+
+# =========================
+# OS FILES
+# =========================
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
 
-.env
-cls_env/
-__pycache__/
-*.pyc
-dist/
-cls_env/
-__pycache__/
-*.pyc
-.env
-node_modules/
-dist/
-build/
+# =========================
+# OPTIONAL (IDE)
+# =========================
+.vscode/
+.idea/

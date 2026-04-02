@@ -12,7 +12,22 @@
 
 **Lex-Sentinel** is an enterprise-grade contract intelligence platform designed specifically for pharmaceutical and clinical vendor risk management. It transforms passive PDF contracts into an active, dynamic matrix of discoverable risks and provides generative tools to remediate those risks instantly. 
 
-Built for hackathon execution, this platform moves beyond traditional OCR—leveraging ultra-fast Large Language Models via Groq to not only **find** legal problems, but actively **fix** them.
+---
+
+## 🚨 The Problem
+
+In the pharmaceutical and med-tech industries, legal teams spend hundreds of hours manually reviewing massive, 80+ page Master Clinical Trial Agreements and vendor Statements of Work. 
+
+The primary goal of this manual review is to spot missing or highly unfavorable critical risk clauses—such as *Caps on Liability*, *Audit Rights*, or *IP Ownership*. 
+* **High Risk of Human Error:** Missing a single indemnification clause can expose a company to millions in liability.
+* **Failure of Legacy Tools:** Traditional automated tools rely on fragile keyword searches that cannot handle semantic legal variations (e.g., looking for the word "indemnify" when the contract uses "hold harmless").
+* **LLM Bottlenecks:** Naively stuffing an entire 80-page PDF into a standard LLM is incredibly slow, expensive, and prone to hallucinations or context-window limits.
+
+## 💡 The Solution
+
+Lex-Sentinel completely overhauls the legal review workflow using an **"Embed First, Extract Second"** architecture. 
+
+Instead of overwhelming an LLM with an entire document, the platform chunks and embeds contracts into a local vector database. It then uses semantic search to find the exact relevant paragraphs and feeds only those precise contexts to ultra-fast LLMs (Llama 3.3 via Groq). This allows the system to not only **find** complex legal problems with high accuracy but actively **fix** them by auto-drafting remediations and redlining dangerous text in seconds.
 
 ---
 
@@ -37,10 +52,11 @@ A fully interactive Chat interface powered by LangChain. Select specific vendor 
 
 ## 🛠️ Technology Stack
 
-- **Frontend Interface:** React.js mapped via Vite, meticulously styled with TailwindCSS for a premium Enterprise Dark-Mode aesthetic. `react-plotly.js` drives the interactive vendor matrices.
-- **Backend Architecture:** High-concurrency Python **FastAPI** backbone managing `pandas` contract dataframes.
-- **AI / LLM Orchestration:** Powered by **LangChain** utilizing `ChatGroq` (Llama-3.3-70b-versatile) for blazing-fast inference, with automatic fallback handling to Google Gemini (`gemini-2.5-flash`).
-- **Vector Retrieval:** HuggingFace Embeddings (`BAAI/bge-large-en-v1.5`) serving dense RAG capabilities.
+* **Frontend Interface:** React.js mapped via Vite, meticulously styled with TailwindCSS for a premium Enterprise Dark-Mode aesthetic. `react-plotly.js` drives the interactive vendor matrices.
+* **Backend Architecture:** High-concurrency Python **FastAPI** backbone managing `pandas` contract dataframes.
+* **AI / LLM Orchestration:** Powered by **LangChain** utilizing `ChatGroq` (Llama-3.3-70b-versatile) for blazing-fast inference, with automatic fallback handling to Google Gemini (`gemini-2.5-flash`).
+* **Vector Retrieval:** HuggingFace Embeddings (`BAAI/bge-large-en-v1.5`) serving dense RAG capabilities.
+* **Database:** Qdrant (Local Vector DB).
 
 ---
 
@@ -48,5 +64,5 @@ A fully interactive Chat interface powered by LangChain. Select specific vendor 
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Siddhesh1207/Lex-Sentinel.git
+git clone [https://github.com/Siddhesh1207/Lex-Sentinel.git](https://github.com/Siddhesh1207/Lex-Sentinel.git)
 cd Lex-Sentinel
